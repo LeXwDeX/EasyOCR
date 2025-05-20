@@ -1,8 +1,5 @@
 FROM docker.io/pytorch/pytorch
 
-# if you forked EasyOCR, you can pass in your own GitHub username to use your fork
-# i.e. gh_username=myname
-ARG gh_username=JaidedAI
 ARG service_home="/home/EasyOCR"
 
 # Configure apt and install packages
@@ -14,17 +11,27 @@ RUN apt-get update -y && \
     libxrender-dev \
     libgl1-mesa-dev \
     git \
+    fonts-noto-cjk \
+    fonts-noto-color-emoji \
+    fonts-wqy-zenhei \
+    tzdata \
+    locales \
     # cleanup
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists
 
-# Clone EasyOCR repo
-RUN mkdir "$service_home" \
-    && git clone "https://github.com/$gh_username/EasyOCR.git" "$service_home" \
-    && cd "$service_home" \
-    && git remote add upstream "https://github.com/JaidedAI/EasyOCR.git" \
-    && git pull upstream master
+# 设置时区和 locale，防止中文乱码
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN sed -i 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
+ENV LANG=zh_CN.UTF-8
+ENV LANGUAGE=zh_CN:zh
+ENV LC_ALL=zh_CN.UTF-8
+
+# 复制本地 EasyOCR 代码到容器
+RUN mkdir -p "$service_home"
+COPY . "$service_home"
 
 # Build
 RUN cd "$service_home" \
