@@ -2,6 +2,8 @@ FROM docker.io/pytorch/pytorch
 
 ARG service_home="/home/EasyOCR"
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Configure apt and install packages
 RUN apt-get update -y && \
     apt-get install -y \
